@@ -1,11 +1,54 @@
-def tg-url [
-    bot_name
-    method
+export def add-bot [
+    token: string
+    --info
 ] {
-    auth-token $bot_name
-    | $"https://api.telegram.org/bot($in)/($method)"
+    http get $'https://api.telegram.org/bot($token)/getMe'
+    | if $info {
+        return $in
+    } else {
+        let $botname = get result.username
+
+        authentification --path
+        | if ($in | path exists) {
+            open
+        } else {{}}
+        | merge {$botname: {token: $token}}
+        | save -f (authentification --path)
+
+        echo $'($botname) was added'
+    }
 }
 
+export def send-message [
+    text?: string
+    --recipient: string@nu-complete-recipients
+    --parse_mode: string@nu-complete-parse-modes = ''
+    --disable_notification
+] {
+    let $message = $in | default $text
+
+    let $chat_bot = $recipient | split row '@'
+
+    {
+        "chat_id": $chat_bot.0,
+        "text": $message,
+        "disable_notification": $disable_notification
+    }
+    | if $parse_mode != '' {
+        insert parse_mode $parse_mode
+    } else {}
+    | http post --content-type application/json ( tg-url $chat_bot.1 'sendMessage' ) $in
+    | if $in.ok {
+        tee {
+            let $input = get result.0
+
+            $input
+            | save (
+                nutgb-path --ensure_folders $chat_bot.1 sent_messages --file $'($input.message_id).json'
+            )
+        }
+    } else {}
+}
 
 export def get-updates [
     bot_name: string@nu-complete-bots
@@ -92,10 +135,6 @@ def authentification [
     }
 }
 
-def nu-complete-bots [] {
-    authentification | columns
-}
-
 def auth-token [
     bot_name: string@nu-complete-bots
 ]: nothing -> string {
@@ -104,56 +143,8 @@ def auth-token [
     | get token
 }
 
-export def send-message [
-    text?: string
-    --recipient: string@nu-complete-recipients
-    --parse_mode: string@nu-complete-parse-modes = ''
-    --disable_notification
-] {
-    let $message = $in | default $text
-
-    let $chat_bot = $recipient | split row '@'
-
-    {
-        "chat_id": $chat_bot.0,
-        "text": $message,
-        "disable_notification": $disable_notification
-    }
-    | if $parse_mode != '' {
-        insert parse_mode $parse_mode
-    } else {}
-    | http post --content-type application/json ( tg-url $chat_bot.1 'sendMessage' ) $in
-    | if $in.ok {
-        tee {
-            let $input = get result.0
-
-            $input
-            | save (
-                nutgb-path --ensure_folders $chat_bot.1 sent_messages --file $'($input.message_id).json'
-            )
-        }
-    } else {}
-}
-
-export def add-bot [
-    token: string
-    --info
-] {
-    http get $'https://api.telegram.org/bot($token)/getMe'
-    | if $info {
-        return $in
-    } else {
-        let $botname = get result.username
-
-        authentification --path
-        | if ($in | path exists) {
-            open
-        } else {{}}
-        | merge {$botname: {token: $token}}
-        | save -f (authentification --path)
-
-        echo $'($botname) was added'
-    }
+def nu-complete-bots [] {
+    authentification | columns
 }
 
 def nu-complete-parse-modes [] {
@@ -169,4 +160,12 @@ def nu-complete-recipients [] {
     | each {
         {value: $in.id, description: ($in | reject id | to nuon)}
     }
+}
+
+def tg-url [
+    bot_name
+    method
+] {
+    auth-token $bot_name
+    | $"https://api.telegram.org/bot($in)/($method)"
 }
