@@ -47,6 +47,7 @@ export def get-chats [
 
 def nutgb-path [
     ...rest: string # folders to append
+    --file: string = ''
     --ensure_folders
 ] {
     $env.nutgb-path?
@@ -62,15 +63,15 @@ def nutgb-path [
         path join ...$rest
     }
     | if not ($in | path exists) and $ensure_folders {
-        tee {mkdir $in}
+        let $input = $in; mkdir $input; $input
     } else { }
+    | path join $file
 }
 
 def authentification [
     --path
 ] {
-    nutgb-path
-    | path join 'bots-auth.yaml'
+    nutgb-path --file 'bots-auth.yaml'
     | if $path {} else {
         open
     }
