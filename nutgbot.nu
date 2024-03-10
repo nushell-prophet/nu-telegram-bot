@@ -15,7 +15,7 @@ export def get-updates [
     | get result
     | tee {
         each {|i|
-            let $path = nutgb-path $bot_name results
+            let $path = nutgb-path --ensure_folders $bot_name results
                 | path join $'($i.update_id).json'
 
             if not ($path  | path exists) {
@@ -26,7 +26,8 @@ export def get-updates [
 }
 
 def parse-updates [] {
-    get message.chat -i | compact
+    get message.chat -i
+    | compact
     | upsert name {|i| $i.username? | default $i.title?}
     | select id name type
 }
@@ -35,7 +36,7 @@ export def get-chats [
     bot_name: string@nu-complete-bots
     --update
 ] {
-    glob (nutgb-path $bot_name results | path join '*.json')
+    glob (nutgb-path $bot_name results '*.json')
     | each {open}
     | if $update or ($in | is-empty) {
         append (get-updates $bot_name)
@@ -45,39 +46,44 @@ export def get-chats [
 }
 
 def nutgb-path [
-    ...folders: string # folders to append
-    --auth
+    ...rest: string # folders to append
+    --ensure_folders
 ] {
     $env.nutgb-path?
     | default (
-        $env.XDG_CONFIG_HOME? | if ($in != null) {
+        $env.XDG_CONFIG_HOME?
+        | if ($in != null) {
             path join 'nutgb'
         } else {
-            '~' | path join '.nutgb'
+            $nu.home-path | path join '.nutgb'
         }
     )
-    | path expand
-    | if $folders == [] {} else {
-        path join ...$folders
+    | if $rest == [] {} else {
+        path join ...$rest
     }
-    | if ($in | path exists) {} else {
-        let $p = $in
-        mkdir $p
-        $p
+    | if not ($in | path exists) and $ensure_folders {
+        tee {mkdir $in}
+    } else { }
+}
+
+def authentification [
+    --path
+] {
+    nutgb-path
+    | path join 'bots-auth.yaml'
+    | if $path {} else {
+        open
     }
-    | if $auth {
-        path join 'bots-auth.yaml'
-    } else {}
 }
 
 def nu-complete-bots [] {
-    open ( nutgb-path --auth ) | columns
+    authentification | columns
 }
 
 def auth-token [
     bot_name: string@nu-complete-bots
 ]: nothing -> string {
-    open ( nutgb-path --auth )
+    authentification
     | get $bot_name
     | get token
 }
@@ -112,12 +118,12 @@ export def add-bot [
     } else {
         let $botname = get result.username
 
-        nutgb-path --auth
+        authentification --path
         | if ($in | path exists) {
             open
         } else {{}}
         | merge {$botname: {token: $token}}
-        | save -f (nutgb-path --auth)
+        | save -f (authentification --path)
 
         echo $'($botname) was added'
     }
