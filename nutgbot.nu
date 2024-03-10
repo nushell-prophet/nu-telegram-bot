@@ -25,7 +25,7 @@ export def get-updates [
     }
 }
 
-def parse-updates [] {
+def parse-messages [] {
     get message.chat -i
     | compact
     | upsert name {|i| $i.username? | default $i.title?}
@@ -41,7 +41,7 @@ export def get-chats [
     | if $update or ($in | is-empty) {
         append (get-updates $bot_name)
     } else {}
-    | parse-updates
+    | parse-messages
     | uniq-by id
 }
 
