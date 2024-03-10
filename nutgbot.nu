@@ -32,16 +32,31 @@ def parse-messages [] {
     | select id name type
 }
 
-export def get-chats [
-    bot_name: string@nu-complete-bots
-    --update
+export def get-recipients [
+    bot_name?: string@nu-complete-bots
+    --update_chats
 ] {
-    glob (nutgb-path $bot_name results '*.json')
+    $bot_name
+    | if $in == null {
+        nu-complete-bots
+    } else {[$in]}
+    | each {
+        get-recipient $in --update_chats=$update_chats
+    }
+    | flatten
+}
+
+def get-recipient [
+    bot_name: string@nu-complete-bots
+    --update_chats
+] {
+    glob (nutgb-path $bot_name results --file '*.json')
     | each {open}
-    | if $update or ($in | is-empty) {
+    | if $update_chats or ($in | is-empty) {
         append (get-updates $bot_name)
     } else {}
     | parse-messages
+    | update id {|i| $'($i.id)@($bot_name)'}
     | uniq-by id
 }
 
@@ -91,22 +106,33 @@ def auth-token [
 
 export def send-message [
     text?: string
-    --bot_name: string@nu-complete-bots
-    --chat_id: string
+    --recipient: string@nu-complete-recipients
     --parse_mode: string@nu-complete-parse-modes = ''
     --disable_notification
 ] {
-    let $input = $in | default $text
+    let $message = $in | default $text
+
+    let $chat_bot = $recipient | split row '@'
 
     {
-        "chat_id": $chat_id,
-        "text": $input,
+        "chat_id": $chat_bot.0,
+        "text": $message,
         "disable_notification": $disable_notification
     }
     | if $parse_mode != '' {
         insert parse_mode $parse_mode
     } else {}
-    | http post --content-type application/json ( tg-url $bot_name 'sendMessage' ) $in
+    | http post --content-type application/json ( tg-url $chat_bot.1 'sendMessage' ) $in
+    | if $in.ok {
+        tee {
+            let $input = get result.0
+
+            $input
+            | save (
+                nutgb-path --ensure_folders $chat_bot.1 sent_messages --file $'($input.message_id).json'
+            )
+        }
+    } else {}
 }
 
 export def add-bot [
@@ -136,4 +162,11 @@ def nu-complete-parse-modes [] {
         'Markdown'
         'HTML'
     ]
+}
+
+def nu-complete-recipients [] {
+    get-recipients
+    | each {
+        {value: $in.id, description: ($in | reject id | to nuon)}
+    }
 }
