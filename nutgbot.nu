@@ -7,7 +7,7 @@ def tg-url [
 }
 
 
-export def updates [
+export def get-updates [
     bot_name: string@nu-complete-bots
     --all_data
 ] {
@@ -15,17 +15,13 @@ export def updates [
     | get result
     | tee {
         each {|i|
-            let $path = nutgb-path 'results' $bot_name
+            let $path = nutgb-path $bot_name results
                 | path join $'($i.update_id).json'
 
             if not ($path  | path exists) {
-                mkdir ($path | path dirname)
                 $i | reject update_id | save $path
             }
         }
-    }
-    | if $all_data {} else {
-        parse-updates
     }
 }
 
@@ -39,10 +35,10 @@ export def get-chats [
     bot_name: string@nu-complete-bots
     --update
 ] {
-    glob (nutgb-path $bot_name | path join '*.json')
+    glob (nutgb-path $bot_name results | path join '*.json')
     | each {open}
     | if $update or ($in | is-empty) {
-        append (updates --all_data $bot_name)
+        append (get-updates $bot_name)
     } else {}
     | parse-updates
     | uniq-by id
@@ -54,9 +50,11 @@ def nutgb-path [
 ] {
     $env.nutgb-path?
     | default (
-        $env.XDG_CONFIG_HOME?
-        | default '~'
-        | path join '.nutgb'
+        $env.XDG_CONFIG_HOME? | if ($in != null) {
+            path join 'nutgb'
+        } else {
+            '~' | path join '.nutgb'
+        }
     )
     | path expand
     | if $folders == [] {} else {
