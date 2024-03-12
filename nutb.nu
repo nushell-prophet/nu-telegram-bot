@@ -92,14 +92,20 @@ def get-recipient [
     bot_name: string@nu-complete-bots
     --update_chats
 ] {
-    glob (nutgb-path $bot_name results --file '*.json')
-    | each {open}
+    open-updates $bot_name
     | if $update_chats or ($in | is-empty) {
         append (get-updates $bot_name)
     } else {}
     | parse-messages
     | update id {|i| $'($i.id)@($bot_name)'}
     | uniq-by id
+}
+
+export def open-updates [
+    bot_name: string@nu-complete-bots
+] {
+    glob (nutgb-path $bot_name updates --file '*.json')
+    | each {open}
 }
 
 def nutgb-path [
