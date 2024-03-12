@@ -58,8 +58,7 @@ export def get-updates [
     | get result
     | tee {
         each {|i|
-            let $path = nutgb-path --ensure_folders $bot_name results
-                | path join $'($i.update_id).json'
+            let $path = nutgb-path --ensure_folders $bot_name updates --file $'($i.update_id).json'
 
             if not ($path  | path exists) {
                 $i | reject update_id | save $path
