@@ -50,6 +50,48 @@ export def send-message [
     } else {}
 }
 
+export def send-photo [
+    file_path?: path
+    --recipient: string@nu-complete-recipients
+    --parse_mode: string@nu-complete-parse-modes = ''
+    --caption: string = ''
+    --reply_to_message_id: string = ''
+    --disable_notification
+] {
+    let $message = $in | default $file_path
+
+    let $chat_bot = $recipient | split row '@'
+
+    let $params = (
+        {
+            "chat_id": $chat_bot.0,
+            "disable_notification": ($disable_notification | into string)
+        }
+        | if $parse_mode != '' {
+            insert parse_mode $parse_mode
+        } else {}
+        | if $caption != '' {
+            insert caption $caption
+        } else {}
+        | if $reply_to_message_id != '' {
+            insert reply_to_message_id $reply_to_message_id
+        } else {}
+    )
+
+    curl (tg-url $chat_bot.1 'sendPhoto' $params) -H 'Content-Type: multipart/form-data' -F $'photo=@($message)'
+    | from json
+    | if $in.ok {
+        tee {
+            let $input = get result.0
+
+            $input
+            | save (
+                nutgb-path --ensure_folders $chat_bot.1 sent_messages --file $'($input.message_id).json'
+            )
+        }
+    } else {}
+}
+
 export def get-updates [
     bot_name: string@nu-complete-bots
     --all_data
