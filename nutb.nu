@@ -170,7 +170,15 @@ def nu-complete-recipients [] {
 def tg-url [
     bot_name
     method
+    params: record = {}
 ] {
-    auth-token $bot_name
-    | $"https://api.telegram.org/bot($in)/($method)"
+    {
+        scheme: 'https'
+        host: 'api.telegram.org'
+        path: $'bot(auth-token $bot_name)/($method)'
+    }
+    | if ($params | is-empty) {} else {
+        insert params $params
+    }
+    | url join
 }
