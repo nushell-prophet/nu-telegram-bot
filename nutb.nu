@@ -21,9 +21,11 @@ export def add-bot [
 
 export def send-message [
     text?: string
-    --recipient: string@nu-complete-recipients
+    --disable_user_notification
     --parse_mode: string@nu-complete-parse-modes = ''
-    --disable_notification
+    --recipient: string@nu-complete-recipients
+    --reply_to_message_id: string = ''
+    --quiet # don't ouput send details
 ] {
     let $message = $in | default $text
 
@@ -32,8 +34,9 @@ export def send-message [
     {}
     | add-param chat_id $chat_bot.0
     | add-param text $message
-    | add-param disable_notification $disable_notification
+    | add-param disable_notification $disable_user_notification
     | add-param parse_mode $parse_mode
+    | add-param reply_to_message_id $reply_to_message_id
     | http post --content-type application/json ( tg-url $chat_bot.1 'sendMessage' ) $in
     | if $in.ok {
         tee {
@@ -45,6 +48,7 @@ export def send-message [
             )
         }
     } else {}
+    | if $quiet {null} else {}
 }
 
 export def send-photo [
@@ -53,7 +57,8 @@ export def send-photo [
     --parse_mode: string@nu-complete-parse-modes = ''
     --caption: string = ''
     --reply_to_message_id: string = ''
-    --disable_notification
+    --disable_user_notification
+    --quiet # don't ouput send details
 ] {
     let $message = $in | default $file_path
 
@@ -61,13 +66,13 @@ export def send-photo [
 
     let $params = (
         add-param chat_id $chat_bot.0
-        | add-param disable_notification ($disable_notification | into string)
+        | add-param disable_notification ($disable_user_notification | into string)
         | add-param parse_mode $parse_mode
         | add-param caption $caption
         | add-param reply_to_message_id $reply_to_message_id
     )
 
-    curl (tg-url $chat_bot.1 'sendPhoto' $params) -H 'Content-Type: multipart/form-data' -F $'photo=@($message)'
+    curl (tg-url $chat_bot.1 'sendPhoto' $params) -H 'Content-Type: multipart/form-data' -F $'photo=@($message)' -s
     | from json
     | if $in.ok {
         tee {
@@ -79,6 +84,7 @@ export def send-photo [
             )
         }
     } else {}
+    | if $quiet {null} else {}
 }
 
 export def get-updates [
