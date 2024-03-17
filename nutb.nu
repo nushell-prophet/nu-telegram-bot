@@ -224,3 +224,13 @@ def tg-url [
     }
     | url join
 }
+
+def add-param [
+    name: string
+    value: any
+] {
+    default {}
+    | if $value != '' {
+        insert $name $value
+    } else {}
+}
