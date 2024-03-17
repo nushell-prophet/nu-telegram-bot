@@ -29,14 +29,11 @@ export def send-message [
 
     let $chat_bot = $recipient | split row '@'
 
-    {
-        "chat_id": $chat_bot.0,
-        "text": $message,
-        "disable_notification": $disable_notification
-    }
-    | if $parse_mode != '' {
-        insert parse_mode $parse_mode
-    } else {}
+    {}
+    | add-param chat_id $chat_bot.0
+    | add-param text $message
+    | add-param disable_notification $disable_notification
+    | add-param parse_mode $parse_mode
     | http post --content-type application/json ( tg-url $chat_bot.1 'sendMessage' ) $in
     | if $in.ok {
         tee {
@@ -63,19 +60,11 @@ export def send-photo [
     let $chat_bot = $recipient | split row '@'
 
     let $params = (
-        {
-            "chat_id": $chat_bot.0,
-            "disable_notification": ($disable_notification | into string)
-        }
-        | if $parse_mode != '' {
-            insert parse_mode $parse_mode
-        } else {}
-        | if $caption != '' {
-            insert caption $caption
-        } else {}
-        | if $reply_to_message_id != '' {
-            insert reply_to_message_id $reply_to_message_id
-        } else {}
+        add-param chat_id $chat_bot.0
+        | add-param disable_notification ($disable_notification | into string)
+        | add-param parse_mode $parse_mode
+        | add-param caption $caption
+        | add-param reply_to_message_id $reply_to_message_id
     )
 
     curl (tg-url $chat_bot.1 'sendPhoto' $params) -H 'Content-Type: multipart/form-data' -F $'photo=@($message)'
