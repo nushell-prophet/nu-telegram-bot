@@ -113,7 +113,7 @@ def parse-messages [] {
 
 export def get-recipients [
     bot_name?: string@nu-complete-bots
-    --update_chats
+    --update_chats # make request to update receivers list
 ] {
     $bot_name
     | if $in == null {
@@ -127,7 +127,7 @@ export def get-recipients [
 
 def get-recipient [
     bot_name: string@nu-complete-bots
-    --update_chats
+    --update_chats # make request to update receivers list
 ] {
     open-updates $bot_name
     | if $update_chats or ($in | is-empty) {
