@@ -74,7 +74,13 @@ export def send-photo [
         | add-param caption $caption
         | add-param reply_to_message_id $reply_to_message_id
 
-    curl (tg-url $chat_bot.1 'sendPhoto' $params) -H 'Content-Type: multipart/form-data' -F $'photo=@($message)' -s
+    let $method = if ($message | path parse | get extension) in ['gif' 'mp4'] {
+            ['sendAnimation' 'animation']
+        } else {
+            ['sendPhoto' 'photo']
+        }
+
+    curl (tg-url $chat_bot.1 $method.0 $params) -H 'Content-Type: multipart/form-data' -F $'($method.1)=@($message)' -s
     | from json
     | if $in.ok {
         tee {
