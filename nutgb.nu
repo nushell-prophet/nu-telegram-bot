@@ -51,7 +51,7 @@ export def send-message [
     | if $quiet {null} else {}
 }
 
-export def send-photo [
+export def send-image [
     file_path?: path
     --recipient: string@nu-complete-recipients
     --parse_mode: string@nu-complete-parse-modes = ''
