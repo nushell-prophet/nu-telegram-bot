@@ -62,6 +62,10 @@ export def send-photo [
 ] {
     let $message = $in | default $file_path
 
+    if not ($message | path exists) {
+        error make {msg: $'There is no ($message) file'}
+    }
+
     let $chat_bot = $recipient | split row '@'
 
     let $params = (
