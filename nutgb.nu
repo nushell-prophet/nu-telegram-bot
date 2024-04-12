@@ -68,13 +68,11 @@ export def send-photo [
 
     let $chat_bot = $recipient | split row '@'
 
-    let $params = (
-        add-param chat_id $chat_bot.0
+    let $params = add-param chat_id $chat_bot.0
         | add-param disable_notification ($disable_user_notification | into string)
         | add-param parse_mode $parse_mode
         | add-param caption $caption
         | add-param reply_to_message_id $reply_to_message_id
-    )
 
     curl (tg-url $chat_bot.1 'sendPhoto' $params) -H 'Content-Type: multipart/form-data' -F $'photo=@($message)' -s
     | from json
