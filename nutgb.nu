@@ -55,13 +55,13 @@ export def send-message [
 
 # send an image or animation file to a recipient via a bot
 export def send-image [
-    file_path?: path
-    --recipient: string@nu-complete-recipients
-    --parse_mode: string@nu-complete-parse-modes = ''
-    --caption: string = ''
-    --reply_to_message_id: string = ''
-    --disable_user_notification
-    --quiet # don't ouput send details
+    file_path?: path # the path to the image or animation file to be sent
+    --recipient: string@nu-complete-recipients # the recipient of the message
+    --parse_mode: string@nu-complete-parse-modes = '' # the mode for parsing the message caption
+    --caption: string = '' # the caption for the image or animation
+    --reply_to_message_id: string = '' # the message ID to reply to
+    --disable_user_notification # if set, disables notification for the recipient
+    --quiet # don't output send details
 ] {
     let $message = $in | default $file_path
 
@@ -100,8 +100,8 @@ export def send-image [
 
 # retrieve messages sent to a bot by users in last hours and save them locally
 export def get-updates [
-    bot_name: string@nu-complete-bots
-    --all_data
+    bot_name: string@nu-complete-bots # the name of the bot to retrieve updates for
+    --all_data # if set, retrieves all data instead of just the message data
 ] {
     http get (tg-url $bot_name getUpdates)
     | get result
@@ -126,8 +126,8 @@ def parse-messages [] {
 
 # get a list of recipients for a bot, optionally updating the list
 export def get-recipients [
-    bot_name?: string@nu-complete-bots
-    --update_chats # make request to update receivers list
+    bot_name?: string@nu-complete-bots # the name of the bot to retrieve recipients for
+    --update_chats # if set, updates the recipient list by making a request
 ] {
     $bot_name
     | if $in == null {
@@ -143,8 +143,8 @@ export def get-recipients [
 
 # get recipient details for a bot, optionally updating the chat list
 def get-recipient [
-    bot_name: string@nu-complete-bots
-    --update_chats # make request to update receivers list
+    bot_name: string@nu-complete-bots # the name of the bot to retrieve recipient details for
+    --update_chats # if set, updates the chat list by making a request
 ] {
     open-updates $bot_name
     | if $update_chats or ($in | is-empty) {
@@ -157,7 +157,7 @@ def get-recipient [
 
 # open locally saved updates for a bot
 export def open-updates [
-    bot_name: string@nu-complete-bots
+    bot_name: string@nu-complete-bots # the name of the bot to open updates for
 ] {
     glob (nutgb-path $bot_name updates --file '*.json')
     | each {open}
@@ -166,8 +166,8 @@ export def open-updates [
 # construct a file path within the nutgb directory, optionally ensuring folders exist
 def nutgb-path [
     ...rest: string # folders to append
-    --file: string = ''
-    --ensure_folders
+    --file: string = '' # the file name to append
+    --ensure_folders # if set, ensures the folders exist
 ] {
     $env.nutgb-path?
     | default (
@@ -189,7 +189,7 @@ def nutgb-path [
 
 # manage the path and opening of the bot authentication file
 def authentification [
-    --path
+    --path # if set, returns the path of the authentication file instead of opening it
 ] {
     nutgb-path --file 'bots-auth.yaml'
     | if $path {} else {
@@ -199,7 +199,7 @@ def authentification [
 
 # retrieve the authentication token for a bot
 def auth-token [
-    bot_name: string@nu-complete-bots
+    bot_name: string@nu-complete-bots # the name of the bot to retrieve the token for
 ]: nothing -> string {
     authentification
     | get $bot_name
@@ -230,9 +230,9 @@ def nu-complete-recipients [] {
 
 # construct a Telegram API URL for a bot and method, optionally including parameters
 def tg-url [
-    bot_name
-    method
-    params: record = {}
+    bot_name # the name of the bot to construct the URL for
+    method # the method to call on the bot
+    params: record = {} # optional parameters to include in the URL
 ] {
     {
         scheme: 'https'
@@ -247,8 +247,8 @@ def tg-url [
 
 # add a parameter to a record if the value is not empty
 def add-param [
-    name: string
-    value: any
+    name: string # the name of the parameter to add
+    value: any # the value of the parameter to add
 ] {
     default {}
     | if $value != '' {
