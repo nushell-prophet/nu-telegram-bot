@@ -126,7 +126,9 @@ export def get-recipients [
     $bot_name
     | if $in == null {
         nu-complete-bots
-    } else {[$in]}
+    } else {
+        [$in]
+    }
     | each {
         get-recipient $in --update_chats=$update_chats
     }
