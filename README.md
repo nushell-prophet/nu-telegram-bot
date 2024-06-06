@@ -8,14 +8,14 @@ A basic Nushell module for interacting with the Telegram Bot API.
 
 1. Clone this repository
 
-```nu
+```nu no-run
 > git clone https://github.com/nushell-prophet/nu-telegram-bot
 > cd nu-telegram-bot
 > use nutgb.nu
 ```
 2. Obtain the token for your bot from [@botfather](https://t.me/botfather) and add it to `nutgb`
 
-```nu
+```nu no-run
 nutgb add-bot <your-token>
 ```
 3. Send any message to your new bot from the account that will later receive messages from the bot.
@@ -24,13 +24,13 @@ nutgb add-bot <your-token>
 4. Receive updates (sent messages to the bot or events of adding him to groups).
 Mind that you can use `tab` auto-completion for the bot's name here.
 
-```nu
+```nu no-run
 nutgb get-updates <bot-name>
 ```
 
 5. If the previous command gave you some data, it means that now you can send messages using `nutgb send-message`
 
-```nu
+```nu no-run
 nutgb send-message 'some message' --recipient <tab-completed-recipient-name>
 ```
 
