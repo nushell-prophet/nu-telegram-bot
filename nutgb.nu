@@ -191,7 +191,7 @@ def nutgb-path [
 def authentification [
     --return_path # if set, returns the path of the authentication file instead of opening it
 ] {
-    nutgb-path --file 'bots-auth.yaml'
+    nutgb-path --file 'bots-auth.yaml' --create_folders
     | if $return_path {} else {
         open
     }
