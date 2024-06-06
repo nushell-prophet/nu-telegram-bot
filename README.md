@@ -4,6 +4,8 @@
 
 A basic Nushell module for interacting with the Telegram Bot API.
 
+![nutgb-demo](https://github.com/nushell-prophet/nu-telegram-bot/assets/4896754/ab93a871-54a8-4c5c-99c9-1ae54fce19e2)
+
 # Quick start
 
 1. Clone this repository
