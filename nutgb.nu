@@ -1,3 +1,4 @@
+# add a Telegram bot using the provided token and optionally return bot information.
 export def add-bot [
     token: string
     --info
@@ -19,6 +20,7 @@ export def add-bot [
     }
 }
 
+# send a text message to a recipient via a bot
 export def send-message [
     text?: string
     --disable_user_notification
@@ -51,6 +53,7 @@ export def send-message [
     | if $quiet {null} else {}
 }
 
+# send an image or animation file to a recipient via a bot
 export def send-image [
     file_path?: path
     --recipient: string@nu-complete-recipients
@@ -95,6 +98,7 @@ export def send-image [
     | if $quiet {null} else {}
 }
 
+# retrieve updates for a bot and save them locally
 export def get-updates [
     bot_name: string@nu-complete-bots
     --all_data
@@ -112,6 +116,7 @@ export def get-updates [
     }
 }
 
+# parse messages from updates to extract chat information
 def parse-messages [] {
     get message.chat -i
     | compact
@@ -119,6 +124,7 @@ def parse-messages [] {
     | select id name type
 }
 
+# get a list of recipients for a bot, optionally updating the list
 export def get-recipients [
     bot_name?: string@nu-complete-bots
     --update_chats # make request to update receivers list
@@ -135,6 +141,7 @@ export def get-recipients [
     | flatten
 }
 
+# get recipient details for a bot, optionally updating the chat list
 def get-recipient [
     bot_name: string@nu-complete-bots
     --update_chats # make request to update receivers list
@@ -148,6 +155,7 @@ def get-recipient [
     | uniq-by id
 }
 
+# open locally saved updates for a bot
 export def open-updates [
     bot_name: string@nu-complete-bots
 ] {
@@ -155,6 +163,7 @@ export def open-updates [
     | each {open}
 }
 
+# construct a file path within the nutgb directory, optionally ensuring folders exist
 def nutgb-path [
     ...rest: string # folders to append
     --file: string = ''
@@ -178,6 +187,7 @@ def nutgb-path [
     | path join $file
 }
 
+# manage the path and opening of the bot authentication file
 def authentification [
     --path
 ] {
@@ -187,6 +197,7 @@ def authentification [
     }
 }
 
+# retrieve the authentication token for a bot
 def auth-token [
     bot_name: string@nu-complete-bots
 ]: nothing -> string {
@@ -195,10 +206,12 @@ def auth-token [
     | get token
 }
 
+# list all bots available for completion
 def nu-complete-bots [] {
     authentification | columns
 }
 
+# list available parse modes for message formatting
 def nu-complete-parse-modes [] {
     [
         'MarkdownV2'
@@ -207,6 +220,7 @@ def nu-complete-parse-modes [] {
     ]
 }
 
+# list available recipients for message sending
 def nu-complete-recipients [] {
     get-recipients
     | each {
@@ -214,6 +228,7 @@ def nu-complete-recipients [] {
     }
 }
 
+# construct a Telegram API URL for a bot and method, optionally including parameters
 def tg-url [
     bot_name
     method
@@ -230,6 +245,7 @@ def tg-url [
     | url join
 }
 
+# add a parameter to a record if the value is not empty
 def add-param [
     name: string
     value: any
