@@ -144,7 +144,7 @@ def get-recipient [
         append (get-updates $bot_name)
     } else {}
     | parse-messages
-    | update id {|i| $'($i.id)@($bot_name)'}
+    | update id {|i| $'($i.id)@($bot_name)@($i.name)'}
     | uniq-by id
 }
 
