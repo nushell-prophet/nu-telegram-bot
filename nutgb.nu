@@ -1,7 +1,7 @@
-# add a Telegram bot using the provided token and optionally return bot information.
+# add a Telegram bot using the provided token and optionally return bot information
 export def add-bot [
-    token: string
-    --info
+    token: string # the bot token provided by Telegram
+    --info # if set, returns bot information instead of saving it
 ] {
     http get $'https://api.telegram.org/bot($token)/getMe'
     | if $info {
@@ -22,12 +22,12 @@ export def add-bot [
 
 # send a text message to a recipient via a bot
 export def send-message [
-    text?: string
-    --disable_user_notification
-    --parse_mode: string@nu-complete-parse-modes = ''
-    --recipient: string@nu-complete-recipients
-    --reply_to_message_id: string = ''
-    --quiet # don't ouput send details
+    text?: string # the message text to be sent
+    --disable_user_notification # if set, disables notification for the recipient
+    --parse_mode: string@nu-complete-parse-modes = '' # the mode for parsing the message (e.g., Markdown, HTML)
+    --recipient: string@nu-complete-recipients # the recipient of the message
+    --reply_to_message_id: string = '' # the message ID to reply to
+    --quiet # don't output send details
 ] {
     let $message = $in | default $text
 
