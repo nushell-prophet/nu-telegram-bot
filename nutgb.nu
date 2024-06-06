@@ -98,7 +98,7 @@ export def send-image [
     | if $quiet {null} else {}
 }
 
-# retrieve updates for a bot and save them locally
+# retrieve messages sent to a bot by users in last hours and save them locally
 export def get-updates [
     bot_name: string@nu-complete-bots
     --all_data
