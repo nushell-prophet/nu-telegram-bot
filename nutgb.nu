@@ -7,16 +7,16 @@ export def add-bot [
     | if $info {
         return $in
     } else {
-        let $botname = get result.username
+        let $bot_name = get result.username
 
         authentification --path
         | if ($in | path exists) {
             open
         } else {{}}
-        | merge {$botname: {token: $token}}
+        | merge {$bot_name: {token: $token}}
         | save -f (authentification --path)
 
-        echo $'($botname) was added'
+        echo $'($bot_name) was added'
     }
 }
 
@@ -29,24 +29,24 @@ export def send-message [
     --reply_to_message_id: string = '' # the message ID to reply to
     --quiet # don't output send details
 ] {
-    let $message = $in | default $text
+    let $message_text = $in | default $text
 
     let $chat_bot = $recipient | split row '@'
 
     {}
     | add-param chat_id $chat_bot.0
-    | add-param text $message
+    | add-param text $message_text
     | add-param disable_notification $disable_user_notification
     | add-param parse_mode $parse_mode
     | add-param reply_to_message_id $reply_to_message_id
     | http post --content-type application/json ( tg-url $chat_bot.1 'sendMessage' ) $in
     | if $in.ok {
         tee {
-            let $input = get result.0
+            let $sent_message = get result.0
 
-            $input
+            $sent_message
             | save (
-                nutgb-path --ensure_folders $chat_bot.1 sent_messages --file $'($input.message_id).json'
+                nutgb-path --ensure_folders $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
             )
         }
     } else {}
@@ -63,35 +63,35 @@ export def send-image [
     --disable_user_notification # if set, disables notification for the recipient
     --quiet # don't output send details
 ] {
-    let $message = $in | default $file_path
+    let $file_message = $in | default $file_path
 
-    if not ($message | path exists) {
-        error make {msg: $'There is no ($message) file'}
+    if not ($file_message | path exists) {
+        error make {msg: $'There is no ($file_message) file'}
     }
 
     let $chat_bot = $recipient | split row '@'
 
-    let $params = add-param chat_id $chat_bot.0
+    let $request_params = add-param chat_id $chat_bot.0
         | add-param disable_notification ($disable_user_notification | into string)
         | add-param parse_mode $parse_mode
         | add-param caption $caption
         | add-param reply_to_message_id $reply_to_message_id
 
-    let $method = if ($message | path parse | get extension) in ['gif' 'mp4'] {
+    let $api_method = if ($file_message | path parse | get extension) in ['gif' 'mp4'] {
             ['sendAnimation' 'animation']
         } else {
             ['sendPhoto' 'photo']
         }
 
-    curl (tg-url $chat_bot.1 $method.0 $params) -H 'Content-Type: multipart/form-data' -F $'($method.1)=@($message)' -s
+    curl (tg-url $chat_bot.1 $api_method.0 $request_params) -H 'Content-Type: multipart/form-data' -F $'($api_method.1)=@($file_message)' -s
     | from json
     | if $in.ok {
         tee {
-            let $input = get result.0
+            let $sent_message = get result.0
 
-            $input
+            $sent_message
             | save (
-                nutgb-path --ensure_folders $chat_bot.1 sent_messages --file $'($input.message_id).json'
+                nutgb-path --ensure_folders $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
             )
         }
     } else {}
@@ -106,11 +106,11 @@ export def get-updates [
     http get (tg-url $bot_name getUpdates)
     | get result
     | tee {
-        each {|i|
-            let $path = nutgb-path --ensure_folders $bot_name updates --file $'($i.update_id).json'
+        each {|update|
+            let $update_path = nutgb-path --ensure_folders $bot_name updates --file $'($update.update_id).json'
 
-            if not ($path  | path exists) {
-                $i | reject update_id | save $path
+            if not ($update_path  | path exists) {
+                $update | reject update_id | save $update_path
             }
         }
     }
@@ -120,7 +120,7 @@ export def get-updates [
 def parse-messages [] {
     get message.chat -i
     | compact
-    | upsert name {|i| $i.username? | default $i.title?}
+    | upsert name {|chat| $chat.username? | default $chat.title?}
     | select id name type
 }
 
@@ -151,7 +151,7 @@ def get-recipient [
         append (get-updates $bot_name)
     } else {}
     | parse-messages
-    | update id {|i| $'($i.id)@($bot_name)@($i.name)'}
+    | update id {|chat| $'($chat.id)@($bot_name)@($chat.name)'}
     | uniq-by id
 }
 
@@ -182,7 +182,7 @@ def nutgb-path [
         path join ...$rest
     }
     | if not ($in | path exists) and $ensure_folders {
-        let $input = $in; mkdir $input; $input
+        let $constructed_path = $in; mkdir $constructed_path; $constructed_path
     } else { }
     | path join $file
 }
