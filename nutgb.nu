@@ -17,7 +17,7 @@ export def add-bot [
         | upsert ([$bot_name token] | into cell-path) $bot_token
         | save -f (authentification --return_path)
 
-        echo $'($bot_name) was added'
+        { botaname: $bot_name status: 'was added'}
     }
 }
 
