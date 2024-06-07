@@ -158,8 +158,7 @@ def get-recipient [
 export def open-updates [
     bot_name: string@nu-complete-bots # the name of the bot to open updates for
 ] {
-    glob (nutgb-path $bot_name updates --file '*.json')
-    | each {open}
+    open ...(glob (nutgb-path $bot_name updates --file '*.json'))
 }
 
 # construct a file path within the nutgb directory, optionally ensuring folders exist
