@@ -169,19 +169,17 @@ def nutgb-path [
     --create_folders # if set, ensures the folders exist
 ] {
     $env.nutgb-path?
-    | default (
+    | if $in == null {
         $env.XDG_CONFIG_HOME?
-        | if ($in != null) {
+        | if $in != null {
             path join 'nutgb'
         } else {
             $nu.home-path | path join '.nutgb'
         }
-    )
-    | if $rest == [] {} else {
-        path join ...$rest
-    }
+    } else {}
+    | path join ...$rest
     | if not ($in | path exists) and $create_folders {
-        let $constructed_path = $in; mkdir $constructed_path; $constructed_path
+        $'(mkdir $in)($in)'
     } else { }
     | path join $file
 }
