@@ -101,7 +101,6 @@ export def send-image [
 # retrieve messages sent to a bot by users in last hours and save them locally
 export def get-updates [
     bot_name: string@nu-complete-bots # the name of the bot to retrieve updates for
-    --fetch_all_data # if set, retrieves all data instead of just the message data
 ] {
     http get (tg-url $bot_name getUpdates)
     | get result
