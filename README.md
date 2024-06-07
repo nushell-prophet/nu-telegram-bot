@@ -36,9 +36,10 @@ nutgb get-updates <bot-name>
 nutgb send-message 'some message' --recipient <tab-completed-recipient-name>
 ```
 
-`nutgb` saves tokens and other files needed for interactions in:
-1. If set in `$env.XDG_CONFIG_HOME? | path join 'nutgb'`
-2. Otherwise, in `$nu.home-path | path join '.nutgb'`
+`nutgb` saves tokens and conversations with users:
+1. If `$env.nutgb-path` is set - in that folder.
+2. If `$env.XDG_CONFIG_HOME` is set, then in `nutgb` folder inside.
+3. Otherwise, in `.nutgb` folder in home `$nu.home-path`.
 
 You are welcome to read the code and make your understanding.
 The part about locating needed files is described [here](https://github.com/nushell-prophet/nu-telegram-bot/blob/a4528eef02de23e9faa0054304cce46f35ef584e/nutgb.nu#L167).
