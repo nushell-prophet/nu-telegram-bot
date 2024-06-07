@@ -1,6 +1,6 @@
 # add a Telegram bot using the provided token and optionally return bot information
 export def add-bot [
-    bot_token: string # the bot token provided by Telegram
+    bot_token: string # the bot token provided by Telegram's Botfather https://t.me/botfather
     --return_info # if set, returns bot information instead of saving it
 ] {
     http get $'https://api.telegram.org/bot($bot_token)/getMe'
@@ -24,7 +24,7 @@ export def add-bot [
 export def send-message [
     message_text?: string # the message text to be sent
     --silent_notification # if set, disables notification for the recipient
-    --text_format: string@nu-complete-parse-modes = '' # the mode for parsing the message (e.g., Markdown, HTML)
+    --text_format: string@nu-complete-parse-modes = '' # the mode for parsing the message - 'MarkdownV2', 'Markdown', 'HTML'
     --recipient_id: string@nu-complete-recipients # the recipient of the message
     --reply_to_id: string = '' # the message ID to reply to
     --suppress_output # don't output send details
