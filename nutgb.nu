@@ -47,7 +47,7 @@ export def send-message [
 
             $sent_message
             | save (
-                nutgb-path --create_folders $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
+                nutgb-path $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
             )
         }
     } else {}
@@ -92,7 +92,7 @@ export def send-image [
 
             $sent_message
             | save (
-                nutgb-path --create_folders $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
+                nutgb-path $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
             )
         }
     } else {}
@@ -107,7 +107,7 @@ export def get-updates [
     | get result
     | tee {
         each {|update|
-            let $update_path = nutgb-path --create_folders $bot_name updates --file $'($update.update_id).json'
+            let $update_path = nutgb-path $bot_name updates --file $'($update.update_id).json'
 
             if not ($update_path  | path exists) {
                 $update | reject update_id | save $update_path
@@ -166,7 +166,6 @@ export def open-updates [
 def nutgb-path [
     ...rest: string # folders to append
     --file: string = '' # the file name to append
-    --create_folders # if set, ensures the folders exist
 ] {
     $env.nutgb-path?
     | if $in == null {
@@ -178,7 +177,7 @@ def nutgb-path [
         }
     } else {}
     | path join ...$rest
-    | if not ($in | path exists) and $create_folders {
+    | if not ($in | path exists) {
         $'(mkdir $in)($in)'
     } else { }
     | path join $file
@@ -188,7 +187,7 @@ def nutgb-path [
 def authentification [
     --return_path # if set, returns the path of the authentication file instead of opening it
 ] {
-    nutgb-path --file 'bots-auth.yaml' --create_folders
+    nutgb-path --file 'bots-auth.yaml'
     | if $return_path {} else {
         open
     }
