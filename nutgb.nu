@@ -117,7 +117,7 @@ export def send-image [
 
 # retrieve messages sent to a bot by users in last hours and save them locally
 export def get-updates [
-    bot_name: string@nu-complete-bots # the name of the bot to retrieve updates for
+    bot_name: string@bots-list # the name of the bot to retrieve updates for
 ] {
     http get (tg-url $bot_name getUpdates)
     | get result
@@ -142,13 +142,13 @@ def parse-messages [] {
 
 # get a list of recipients for a bot, optionally updating the list
 export def get-recipients [
-    bot_name?: string@nu-complete-bots # the name of the bot to retrieve recipients for
+    bot_name?: string@bots-list # the name of the bot to retrieve recipients for
     --refresh_chat_list # if set, updates the recipient list by making a request
     --set-default # set default recipient to omit setting in other commands
 ] {
     $bot_name
     | if $in == null {
-        nu-complete-bots
+        bots-list
     } else {
         [$in]
     }
@@ -165,7 +165,7 @@ export def get-recipients [
 
 # get recipient details for a bot, optionally updating the chat list
 def get-recipient [
-    bot_name: string@nu-complete-bots # the name of the bot to retrieve recipient details for
+    bot_name: string@bots-list # the name of the bot to retrieve recipient details for
     --refresh_chat_list # if set, updates the chat list by making a request
 ] {
     open-updates $bot_name
@@ -179,7 +179,7 @@ def get-recipient [
 
 # open locally saved updates for a bot
 export def open-updates [
-    bot_name: string@nu-complete-bots # the name of the bot to open updates for
+    bot_name: string@bots-list # the name of the bot to open updates for
 ] {
     open ...(glob (nutgb-path $bot_name updates --file '*.json'))
 }
@@ -217,15 +217,15 @@ def authentification [
 
 # retrieve the authentication token for a bot
 def auth-token [
-    bot_name: string@nu-complete-bots # the name of the bot to retrieve the token for
+    bot_name: string@bots-list # the name of the bot to retrieve the token for
 ]: nothing -> string {
     authentification
     | get $bot_name
     | get token
 }
 
-# list all bots available for completion
-def nu-complete-bots [] {
+# list all bots available
+export def bots-list [] {
     authentification | columns
 }
 
