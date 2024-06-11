@@ -14,8 +14,7 @@ export def add-bot [
         | if ($in | path exists) {
             open
         } else {{}}
-        # we use this construct to preseve other fields like `default`
-        | upsert ([$bot_name token] | into cell-path) $bot_token
+        | merge {$bot_name: {token: $bot_token}}
         | save -f (authentification --return_path)
 
         if $default {
