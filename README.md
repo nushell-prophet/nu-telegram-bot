@@ -36,9 +36,10 @@ nutgb get-updates <bot-name>
 nutgb send-message 'some message' --recipient <tab-completed-recipient-name>
 ```
 
-`nutgb` saves tokens and other files needed for interactions in:
-1. If set in `$env.XDG_CONFIG_HOME? | path join 'nutgb'`
-2. Otherwise, in `$nu.home-path | path join '.nutgb'`
+`nutgb` saves tokens and conversations with users:
+1. If `$env.nutgb-path` is set - in that folder.
+2. If `$env.XDG_CONFIG_HOME` is set, then in `nutgb` folder inside.
+3. Otherwise, in `.nutgb` folder in home `$nu.home-path`.
 
 You are welcome to read the code and make your understanding.
 The part about locating needed files is described [here](https://github.com/nushell-prophet/nu-telegram-bot/blob/a4528eef02de23e9faa0054304cce46f35ef584e/nutgb.nu#L167).
@@ -57,10 +58,11 @@ Usage:
 
 Flags:
   --return_info - if set, returns bot information instead of saving it
+  --default - make this bot default for sending messages from
   -h, --help - Display the help message for this command
 
 Parameters:
-  bot_token <string>: the bot token provided by Telegram
+  bot_token <string>: the bot token provided by Telegram's Botfather https://t.me/botfather
 ```
 
 ```nushell
@@ -70,10 +72,9 @@ nutgb get-updates -h
 retrieve messages sent to a bot by users in last hours and save them locally
 
 Usage:
-  > get-updates {flags} <bot_name> 
+  > get-updates <bot_name> 
 
 Flags:
-  --fetch_all_data - if set, retrieves all data instead of just the message data
   -h, --help - Display the help message for this command
 
 Parameters:
@@ -91,8 +92,8 @@ Usage:
 
 Flags:
   --silent_notification - if set, disables notification for the recipient
-  --text_format <CompleterWrapper(String, 2074)> - the mode for parsing the message (e.g., Markdown, HTML) (default: '')
-  --recipient_id <CompleterWrapper(String, 2075)> - the recipient of the message
+  --text_format <CompleterWrapper(String, 2075)> - the mode for parsing the message - 'MarkdownV2', 'Markdown', 'HTML' (default: '')
+  --recipient_id <CompleterWrapper(String, 2076)> - the recipient of the message
   --reply_to_id <String> - the message ID to reply to (default: '')
   --suppress_output - don't output send details
   -h, --help - Display the help message for this command
@@ -111,8 +112,8 @@ Usage:
   > send-image {flags} (media_path) 
 
 Flags:
-  --recipient_id <CompleterWrapper(String, 2075)> - the recipient of the message
-  --text_format <CompleterWrapper(String, 2074)> - the mode for parsing the message caption (default: '')
+  --recipient_id <CompleterWrapper(String, 2076)> - the recipient of the message
+  --text_format <CompleterWrapper(String, 2075)> - the mode for parsing the message caption (default: '')
   --media_caption <String> - the caption for the image or animation (default: '')
   --reply_to_id <String> - the message ID to reply to (default: '')
   --silent_notification - if set, disables notification for the recipient
@@ -134,6 +135,7 @@ Usage:
 
 Flags:
   --refresh_chat_list - if set, updates the recipient list by making a request
+  --set-default - set default recipient to omit setting in other commands
   -h, --help - Display the help message for this command
 
 Parameters:

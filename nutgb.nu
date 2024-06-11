@@ -1,7 +1,8 @@
 # add a Telegram bot using the provided token and optionally return bot information
 export def add-bot [
-    bot_token: string # the bot token provided by Telegram
+    bot_token: string # the bot token provided by Telegram's Botfather https://t.me/botfather
     --return_info # if set, returns bot information instead of saving it
+    --default # make this bot default for sending messages from
 ] {
     http get $'https://api.telegram.org/bot($bot_token)/getMe'
     | if $return_info {
@@ -16,7 +17,14 @@ export def add-bot [
         | merge {$bot_name: {token: $bot_token}}
         | save -f (authentification --return_path)
 
-        echo $'($bot_name) was added'
+        if $default {
+            bot-set-default $bot_name
+        }
+
+        { botaname: $bot_name status: 'was added'}
+        | if $default {
+            insert default true
+        } else {}
     }
 }
 
@@ -24,14 +32,18 @@ export def add-bot [
 export def send-message [
     message_text?: string # the message text to be sent
     --silent_notification # if set, disables notification for the recipient
-    --text_format: string@nu-complete-parse-modes = '' # the mode for parsing the message (e.g., Markdown, HTML)
+    --text_format: string@nu-complete-parse-modes = '' # the mode for parsing the message - 'MarkdownV2', 'Markdown', 'HTML'
     --recipient_id: string@nu-complete-recipients # the recipient of the message
     --reply_to_id: string = '' # the message ID to reply to
     --suppress_output # don't output send details
 ] {
     let $final_message_text = $in | default $message_text
 
-    let $chat_bot = $recipient_id | split row '@'
+    let $chat_bot = $recipient_id
+        | if $in == null {
+            recipient-get-default
+        } else {}
+        | split row '@'
 
     {}
     | add-param chat_id $chat_bot.0
@@ -46,7 +58,7 @@ export def send-message [
 
             $sent_message
             | save (
-                nutgb-path --create_folders $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
+                nutgb-path $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
             )
         }
     } else {}
@@ -69,7 +81,11 @@ export def send-image [
         error make {msg: $'There is no ($final_media_path) file'}
     }
 
-    let $chat_bot = $recipient_id | split row '@'
+    let $chat_bot = $recipient_id
+        | if $in == null {
+            recipient-get-default
+        } else {}
+        | split row '@'
 
     let $request_params = add-param chat_id $chat_bot.0
         | add-param disable_notification ($silent_notification | into string)
@@ -91,7 +107,7 @@ export def send-image [
 
             $sent_message
             | save (
-                nutgb-path --create_folders $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
+                nutgb-path $chat_bot.1 sent_messages --file $'($sent_message.message_id).json'
             )
         }
     } else {}
@@ -100,14 +116,13 @@ export def send-image [
 
 # retrieve messages sent to a bot by users in last hours and save them locally
 export def get-updates [
-    bot_name: string@nu-complete-bots # the name of the bot to retrieve updates for
-    --fetch_all_data # if set, retrieves all data instead of just the message data
+    bot_name: string@bots-list # the name of the bot to retrieve updates for
 ] {
     http get (tg-url $bot_name getUpdates)
     | get result
     | tee {
         each {|update|
-            let $update_path = nutgb-path --create_folders $bot_name updates --file $'($update.update_id).json'
+            let $update_path = nutgb-path $bot_name updates --file $'($update.update_id).json'
 
             if not ($update_path  | path exists) {
                 $update | reject update_id | save $update_path
@@ -126,12 +141,13 @@ def parse-messages [] {
 
 # get a list of recipients for a bot, optionally updating the list
 export def get-recipients [
-    bot_name?: string@nu-complete-bots # the name of the bot to retrieve recipients for
+    bot_name?: string@bots-list # the name of the bot to retrieve recipients for
     --refresh_chat_list # if set, updates the recipient list by making a request
+    --set-default # set default recipient to omit setting in other commands
 ] {
     $bot_name
     | if $in == null {
-        nu-complete-bots
+        bots-list
     } else {
         [$in]
     }
@@ -139,11 +155,16 @@ export def get-recipients [
         get-recipient $in --refresh_chat_list=$refresh_chat_list
     }
     | flatten
+    | if $set_default {
+        get id
+        | input list
+        | recipient-set-default $in
+    } else {}
 }
 
 # get recipient details for a bot, optionally updating the chat list
 def get-recipient [
-    bot_name: string@nu-complete-bots # the name of the bot to retrieve recipient details for
+    bot_name: string@bots-list # the name of the bot to retrieve recipient details for
     --refresh_chat_list # if set, updates the chat list by making a request
 ] {
     open-updates $bot_name
@@ -157,32 +178,28 @@ def get-recipient [
 
 # open locally saved updates for a bot
 export def open-updates [
-    bot_name: string@nu-complete-bots # the name of the bot to open updates for
+    bot_name: string@bots-list # the name of the bot to open updates for
 ] {
-    glob (nutgb-path $bot_name updates --file '*.json')
-    | each {open}
+    open ...(glob (nutgb-path $bot_name updates --file '*.json'))
 }
 
 # construct a file path within the nutgb directory, optionally ensuring folders exist
 def nutgb-path [
     ...rest: string # folders to append
     --file: string = '' # the file name to append
-    --create_folders # if set, ensures the folders exist
 ] {
     $env.nutgb-path?
-    | default (
+    | if $in == null {
         $env.XDG_CONFIG_HOME?
-        | if ($in != null) {
+        | if $in != null {
             path join 'nutgb'
         } else {
             $nu.home-path | path join '.nutgb'
         }
-    )
-    | if $rest == [] {} else {
-        path join ...$rest
-    }
-    | if not ($in | path exists) and $create_folders {
-        let $constructed_path = $in; mkdir $constructed_path; $constructed_path
+    } else {}
+    | path join ...$rest
+    | if not ($in | path exists) {
+        $'(mkdir $in)($in)'
     } else { }
     | path join $file
 }
@@ -191,7 +208,7 @@ def nutgb-path [
 def authentification [
     --return_path # if set, returns the path of the authentication file instead of opening it
 ] {
-    nutgb-path --file 'bots-auth.yaml' --create_folders
+    nutgb-path --file 'bots-auth.yaml'
     | if $return_path {} else {
         open
     }
@@ -199,15 +216,15 @@ def authentification [
 
 # retrieve the authentication token for a bot
 def auth-token [
-    bot_name: string@nu-complete-bots # the name of the bot to retrieve the token for
+    bot_name: string@bots-list # the name of the bot to retrieve the token for
 ]: nothing -> string {
     authentification
     | get $bot_name
     | get token
 }
 
-# list all bots available for completion
-def nu-complete-bots [] {
+# list all bots available
+export def bots-list [] {
     authentification | columns
 }
 
@@ -254,4 +271,33 @@ def add-param [
     | if $value != '' {
         insert $name $value
     } else {}
+}
+
+
+def bot-set-default [
+    name: string
+] {
+    $name | save (nutgb-path --file default_bot.txt) -f
+}
+
+def recipient-set-default [
+    name: string
+] {
+    $name | save (nutgb-path --file default_recipient.txt) -f
+}
+
+def bot-get-default [
+    name: string
+] {
+    nutgb-path --file default_bot.txt
+    | if ($in | path exists) {open} else {
+        print 'there is no default bot set.'
+    }
+}
+
+def recipient-get-default [] {
+    nutgb-path --file default_recipient.txt
+    | if ($in | path exists) {open} else {
+        print 'there is no default recipient set. Use `nutgb get-recipients --set default`'
+    }
 }
