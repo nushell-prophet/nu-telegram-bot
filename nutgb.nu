@@ -40,7 +40,11 @@ export def send-message [
 ] {
     let $final_message_text = $in | default $message_text
 
-    let $chat_bot = $recipient_id | split row '@'
+    let $chat_bot = $recipient_id
+        | if $in == null {
+            recipient-get-default
+        } else {}
+        | split row '@'
 
     {}
     | add-param chat_id $chat_bot.0
@@ -78,7 +82,11 @@ export def send-image [
         error make {msg: $'There is no ($final_media_path) file'}
     }
 
-    let $chat_bot = $recipient_id | split row '@'
+    let $chat_bot = $recipient_id
+        | if $in == null {
+            recipient-get-default
+        } else {}
+        | split row '@'
 
     let $request_params = add-param chat_id $chat_bot.0
         | add-param disable_notification ($silent_notification | into string)
