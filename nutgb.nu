@@ -2,6 +2,7 @@
 export def add-bot [
     bot_token: string # the bot token provided by Telegram's Botfather https://t.me/botfather
     --return_info # if set, returns bot information instead of saving it
+    --default # make this bot default for sending messages from
 ] {
     http get $'https://api.telegram.org/bot($bot_token)/getMe'
     | if $return_info {
@@ -17,7 +18,14 @@ export def add-bot [
         | upsert ([$bot_name token] | into cell-path) $bot_token
         | save -f (authentification --return_path)
 
+        if $default {
+            bot-set-default $bot_name
+        }
+
         { botaname: $bot_name status: 'was added'}
+        | if $default {
+            insert default true
+        } else {}
     }
 }
 
@@ -128,6 +136,7 @@ def parse-messages [] {
 export def get-recipients [
     bot_name?: string@nu-complete-bots # the name of the bot to retrieve recipients for
     --refresh_chat_list # if set, updates the recipient list by making a request
+    --set-default # set default recipient to omit setting in other commands
 ] {
     $bot_name
     | if $in == null {
@@ -139,6 +148,11 @@ export def get-recipients [
         get-recipient $in --refresh_chat_list=$refresh_chat_list
     }
     | flatten
+    | if $set_default {
+        get id
+        | input list
+        | recipient-set-default $in
+    } else {}
 }
 
 # get recipient details for a bot, optionally updating the chat list
@@ -250,4 +264,33 @@ def add-param [
     | if $value != '' {
         insert $name $value
     } else {}
+}
+
+
+def bot-set-default [
+    name: string
+] {
+    $name | save (nutgb-path --file default_bot.txt) -f
+}
+
+def recipient-set-default [
+    name: string
+] {
+    $name | save (nutgb-path --file default_recipient.txt) -f
+}
+
+def bot-get-default [
+    name: string
+] {
+    nutgb-path --file default_bot.txt
+    | if ($in | path exists) {open} else {
+        print 'there is no default bot set.'
+    }
+}
+
+def recipient-get-default [] {
+    nutgb-path --file default_recipient.txt
+    | if ($in | path exists) {open} else {
+        print 'there is no default recipient set. Use `nutgb get-recipients --set default`'
+    }
 }
