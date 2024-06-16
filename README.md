@@ -50,11 +50,14 @@ The part about locating needed files is described [here](https://github.com/nush
 use nutgb.nu
 nutgb add-bot -h
 ```
-```output-numd
+
+Output:
+
+```
 add a Telegram bot using the provided token and optionally return bot information
 
 Usage:
-  > add-bot {flags} <bot_token> 
+  > add-bot {flags} <bot_token>
 
 Flags:
   --return_info - if set, returns bot information instead of saving it
@@ -68,11 +71,14 @@ Parameters:
 ```nushell
 nutgb get-updates -h
 ```
-```output-numd
+
+Output:
+
+```
 retrieve messages sent to a bot by users in last hours and save them locally
 
 Usage:
-  > get-updates <bot_name> 
+  > get-updates <bot_name>
 
 Flags:
   -h, --help - Display the help message for this command
@@ -84,16 +90,19 @@ Parameters:
 ```nushell
 nutgb send-message -h
 ```
-```output-numd
+
+Output:
+
+```
 send a text message to a recipient via a bot
 
 Usage:
-  > send-message {flags} (message_text) 
+  > send-message {flags} (message_text)
 
 Flags:
   --silent_notification - if set, disables notification for the recipient
-  --text_format <CompleterWrapper(String, 2075)> - the mode for parsing the message - 'MarkdownV2', 'Markdown', 'HTML' (default: '')
-  --recipient_id <CompleterWrapper(String, 2076)> - the recipient of the message
+  --text_format <CompleterWrapper(String, 2076)> - the mode for parsing the message - 'MarkdownV2', 'Markdown', 'HTML' (default: '')
+  --recipient_id <CompleterWrapper(String, 2077)> - the recipient of the message
   --reply_to_id <String> - the message ID to reply to (default: '')
   --suppress_output - don't output send details
   -h, --help - Display the help message for this command
@@ -105,15 +114,18 @@ Parameters:
 ```nushell
 nutgb send-image -h
 ```
-```output-numd
+
+Output:
+
+```
 send an image or animation file to a recipient via a bot
 
 Usage:
-  > send-image {flags} (media_path) 
+  > send-image {flags} (media_path)
 
 Flags:
-  --recipient_id <CompleterWrapper(String, 2076)> - the recipient of the message
-  --text_format <CompleterWrapper(String, 2075)> - the mode for parsing the message caption (default: '')
+  --recipient_id <CompleterWrapper(String, 2077)> - the recipient of the message
+  --text_format <CompleterWrapper(String, 2076)> - the mode for parsing the message caption (default: '')
   --media_caption <String> - the caption for the image or animation (default: '')
   --reply_to_id <String> - the message ID to reply to (default: '')
   --silent_notification - if set, disables notification for the recipient
@@ -127,11 +139,14 @@ Parameters:
 ```nushell
 nutgb get-recipients -h
 ```
-```output-numd
+
+Output:
+
+```
 get a list of recipients for a bot, optionally updating the list
 
 Usage:
-  > get-recipients {flags} (bot_name) 
+  > get-recipients {flags} (bot_name)
 
 Flags:
   --refresh_chat_list - if set, updates the recipient list by making a request
